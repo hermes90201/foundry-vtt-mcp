@@ -45,6 +45,12 @@ const ConfigSchema = z.object({
     pythonCommand: z.string().default('python/python.exe'), // Will be platform-specific
   }),
   toolResponseMaxChars: z.number().min(256).max(500000).default(20000),
+  http: z.object({
+    enabled: z.boolean().default(false),
+    host: z.string().default('127.0.0.1'),
+    port: z.number().min(1024).max(65535).default(3333),
+    authToken: z.string().optional(),
+  }),
   server: z.object({
     name: z.string().default('foundry-mcp-server'),
     version: z.string().default('0.4.17'),
@@ -84,6 +90,12 @@ const rawConfig = {
     pythonCommand: process.env.COMFYUI_PYTHON_COMMAND || 'python/python.exe'
   },
   toolResponseMaxChars: parseInt(process.env.TOOL_RESPONSE_MAX_CHARS || '20000', 10),
+  http: {
+    enabled: process.env.MCP_HTTP_ENABLED === 'true',
+    host: process.env.MCP_HTTP_HOST || '127.0.0.1',
+    port: parseInt(process.env.MCP_HTTP_PORT || '3333', 10),
+    authToken: process.env.MCP_HTTP_AUTH_TOKEN,
+  },
   server: {
     name: process.env.SERVER_NAME || 'foundry-mcp-server',
     version: process.env.SERVER_VERSION || '1.0.0',

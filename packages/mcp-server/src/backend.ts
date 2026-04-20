@@ -1012,6 +1012,144 @@ async function processMapGenerationInBackend(jobId: string, jobQueue: any, comfy
   }
 }
 
+/**
+ * Start optional HTTP transport for local LLM clients (LM Studio, etc.)
+ *
+ * Security model — local LLM only, not internet-facing:
+ * 1. Binds to 127.0.0.1 by default (config.http.host)
+ * 2. Checks Origin header to prevent drive-by browser attacks
+ * 3. Optional bearer token (MCP_HTTP_AUTH_TOKEN) — when set, required on every request
+ *
+ * DO NOT bind to 0.0.0.0 or expose via tunnels without hardening — this is designed
+ * for localhost communication with local LLM clients, not remote/cloud LLMs.
+ */
+async function startHttpTransport(
+  httpConfig: { enabled: boolean; host: string; port: number; authToken?: string | undefined },
+  allTools: any[],
+  dispatchTool: (name: string, args: any) => Promise<any>,
+  logger: Logger
+): Promise<void> {
+  const http = await import('http');
+
+  // Origins considered safe for localhost LM Studio-style clients
+  const isAllowedOrigin = (origin: string | undefined | null): boolean => {
+    if (!origin || origin === 'null') return true; // no Origin header or curl/native client
+    try {
+      const url = new URL(origin);
+      const host = url.hostname;
+      return host === 'localhost' || host === '127.0.0.1' || host === '::1';
+    } catch {
+      return false;
+    }
+  };
+
+  const isAuthorized = (req: import('http').IncomingMessage): boolean => {
+    if (!httpConfig.authToken) return true; // No token configured — allow (localhost already bound)
+    const header = req.headers['authorization'];
+    if (typeof header !== 'string') return false;
+    const parts = header.split(' ');
+    return parts.length === 2 && parts[0]!.toLowerCase() === 'bearer' && parts[1] === httpConfig.authToken;
+  };
+
+  const writeJson = (res: import('http').ServerResponse, statusCode: number, body: any): void => {
+    res.statusCode = statusCode;
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify(body));
+  };
+
+  const readBody = (req: import('http').IncomingMessage): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const chunks: Buffer[] = [];
+      req.on('data', (chunk: Buffer) => chunks.push(chunk));
+      req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
+      req.on('error', reject);
+    });
+  };
+
+  const server = http.createServer(async (req, res) => {
+    try {
+      const origin = req.headers['origin'] as string | undefined;
+      if (!isAllowedOrigin(origin)) {
+        logger.warn('HTTP request rejected — disallowed origin', { origin, url: req.url });
+        writeJson(res, 403, { error: 'Origin not allowed' });
+        return;
+      }
+
+      if (!isAuthorized(req)) {
+        res.setHeader('WWW-Authenticate', 'Bearer');
+        writeJson(res, 401, { error: 'Unauthorized' });
+        return;
+      }
+
+      // Health endpoint — useful for LM Studio connection verification
+      if (req.url === '/health' && req.method === 'GET') {
+        writeJson(res, 200, { status: 'ok', toolCount: allTools.length });
+        return;
+      }
+
+      // MCP JSON-RPC endpoint
+      if (req.url === '/mcp' && req.method === 'POST') {
+        const bodyText = await readBody(req);
+        let body: any;
+        try {
+          body = JSON.parse(bodyText);
+        } catch {
+          writeJson(res, 400, { jsonrpc: '2.0', error: { code: -32700, message: 'Parse error' }, id: null });
+          return;
+        }
+
+        const { id, method, params } = body as { id?: string | number; method?: string; params?: any };
+
+        if (method === 'tools/list') {
+          writeJson(res, 200, { jsonrpc: '2.0', id: id ?? null, result: { tools: allTools } });
+          return;
+        }
+
+        if (method === 'tools/call') {
+          const { name, arguments: args } = (params || {}) as { name?: string; arguments?: any };
+          if (!name) {
+            writeJson(res, 400, { jsonrpc: '2.0', id: id ?? null, error: { code: -32602, message: 'Missing tool name' } });
+            return;
+          }
+          try {
+            const result = await dispatchTool(name, args ?? {});
+            const payload = {
+              content: [{ type: 'text', text: typeof result === 'string' ? result : JSON.stringify(result) }],
+            };
+            writeJson(res, 200, { jsonrpc: '2.0', id: id ?? null, result: payload });
+          } catch (err: any) {
+            const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+            writeJson(res, 200, {
+              jsonrpc: '2.0',
+              id: id ?? null,
+              result: { content: [{ type: 'text', text: `Error: ${errorMessage}` }], isError: true },
+            });
+          }
+          return;
+        }
+
+        writeJson(res, 400, { jsonrpc: '2.0', id: id ?? null, error: { code: -32601, message: 'Method not found' } });
+        return;
+      }
+
+      writeJson(res, 404, { error: 'Not found' });
+    } catch (err: any) {
+      logger.error('HTTP transport request handling failed', { error: err?.message || String(err) });
+      writeJson(res, 500, { error: 'Internal server error' });
+    }
+  });
+
+  await new Promise<void>((resolve, reject) => {
+    server.listen(httpConfig.port, httpConfig.host, () => {
+      logger.info(`HTTP transport listening on ${httpConfig.host}:${httpConfig.port}`, {
+        authRequired: !!httpConfig.authToken,
+      });
+      resolve();
+    });
+    server.on('error', reject);
+  });
+}
+
 async function startBackend(): Promise<void> {
 
   // Logger: file output allowed; avoid stdout noise
@@ -1397,9 +1535,52 @@ async function startBackend(): Promise<void> {
 
             try {
 
-              let result: any;
+              const result = await dispatchTool(name, args);
 
-              switch (name) {
+              const payload = {
+
+                content: [{ type: 'text', text: typeof result === 'string' ? result : JSON.stringify(result) }],
+
+              };
+
+              socket.write(JSON.stringify({ id: msg.id, result: payload }) + '\n');
+
+            } catch (e: any) {
+
+              const errorMessage = e instanceof Error ? e.message : 'Unknown error occurred';
+
+              socket.write(
+
+                JSON.stringify({ id: msg.id, result: { content: [{ type: 'text', text: `Error: ${errorMessage}` }], isError: true } }) + '\n'
+
+              );
+
+            }
+
+            continue;
+
+          }
+
+          socket.write(JSON.stringify({ id: msg.id, error: { message: 'Unknown method' } }) + '\n');
+
+        } catch (e: any) {
+
+          try { socket.write(JSON.stringify({ error: { message: e?.message || 'Bad request' } }) + '\n'); } catch {}
+
+        }
+
+      }
+
+    });
+
+  });
+
+  // Central tool dispatcher - shared by TCP control channel and HTTP transport
+  async function dispatchTool(name: string, args: any): Promise<any> {
+
+    let result: any;
+
+    switch (name) {
 
                 // Character tools
 
@@ -1651,45 +1832,9 @@ async function startBackend(): Promise<void> {
 
               }
 
-              const payload = {
+              return result;
 
-                content: [{ type: 'text', text: typeof result === 'string' ? result : JSON.stringify(result) }],
-
-              };
-
-              socket.write(JSON.stringify({ id: msg.id, result: payload }) + '\n');
-
-            } catch (e: any) {
-
-              const errorMessage = e instanceof Error ? e.message : 'Unknown error occurred';
-
-              socket.write(
-
-                JSON.stringify({ id: msg.id, result: { content: [{ type: 'text', text: `Error: ${errorMessage}` }], isError: true } }) + '\n'
-
-              );
-
-            }
-
-            continue;
-
-          }
-
-          // Unknown method
-
-          socket.write(JSON.stringify({ id: msg.id, error: { message: 'Unknown method' } }) + '\n');
-
-        } catch (e: any) {
-
-          try { socket.write(JSON.stringify({ error: { message: e?.message || 'Bad request' } }) + '\n'); } catch {}
-
-        }
-
-      }
-
-    });
-
-  });
+  }
 
   await new Promise<void>((resolve, reject) => {
 
@@ -1704,6 +1849,14 @@ async function startBackend(): Promise<void> {
     server.on('error', reject);
 
   });
+
+  // Optional HTTP transport for local LLM clients (LM Studio, etc.)
+
+  if (config.http.enabled) {
+
+    await startHttpTransport(config.http, allTools, dispatchTool, logger);
+
+  }
 
   void autoStartComfyUI();
 
