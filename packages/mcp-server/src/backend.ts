@@ -35,6 +35,7 @@ import { MapGenerationTools } from './tools/map-generation.js';
 import { TokenManipulationTools } from './tools/token-manipulation.js';
 
 import { DSA5CharacterCreator } from './systems/dsa5/character-creator.js';
+import { DSA5JsonActorImporter } from './systems/dsa5/json-actor-importer.js';
 
 const CONTROL_HOST = '127.0.0.1';
 
@@ -1067,6 +1068,7 @@ async function startBackend(): Promise<void> {
   const actorCreationTools = new ActorCreationTools({ foundryClient, logger });
 
   const dsa5CharacterCreator = new DSA5CharacterCreator({ foundryClient, logger });
+  const dsa5JsonActorImporter = new DSA5JsonActorImporter({ foundryClient, logger });
 
   const questCreationTools = new QuestCreationTools({ foundryClient, logger });
 
@@ -1299,6 +1301,8 @@ async function startBackend(): Promise<void> {
 
     ...dsa5CharacterCreator.getToolDefinitions(),
 
+    ...dsa5JsonActorImporter.getToolDefinitions(),
+
     ...questCreationTools.getToolDefinitions(),
 
     ...diceRollTools.getToolDefinitions(),
@@ -1494,6 +1498,12 @@ async function startBackend(): Promise<void> {
                 case 'list-dsa5-archetypes':
 
                   result = await dsa5CharacterCreator.handleListArchetypes(args);
+
+                  break;
+
+                case 'import-dsa5-actor-from-json':
+
+                  result = await dsa5JsonActorImporter.handleImportActorFromJson(args);
 
                   break;
 

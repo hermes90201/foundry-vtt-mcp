@@ -36,6 +36,7 @@ export class QueryHandlers {
     CONFIG.queries[`${modulePrefix}.searchCompendium`] = this.handleSearchCompendium.bind(this);
     CONFIG.queries[`${modulePrefix}.listCreaturesByCriteria`] = this.handleListCreaturesByCriteria.bind(this);
     CONFIG.queries[`${modulePrefix}.getAvailablePacks`] = this.handleGetAvailablePacks.bind(this);
+    CONFIG.queries[`${modulePrefix}.getPackIndex`] = this.handleGetPackIndex.bind(this);
 
     // Scene queries
     CONFIG.queries[`${modulePrefix}.getActiveScene`] = this.handleGetActiveScene.bind(this);
@@ -50,6 +51,7 @@ export class QueryHandlers {
 
     // Phase 2 & 3: Write operation queries
     CONFIG.queries[`${modulePrefix}.createActorFromCompendium`] = this.handleCreateActorFromCompendium.bind(this);
+    CONFIG.queries[`${modulePrefix}.createActorFromData`] = this.handleCreateActorFromData.bind(this);
     CONFIG.queries[`${modulePrefix}.getCompendiumDocumentFull`] = this.handleGetCompendiumDocumentFull.bind(this);
     CONFIG.queries[`${modulePrefix}.addActorsToScene`] = this.handleAddActorsToScene.bind(this);
     CONFIG.queries[`${modulePrefix}.validateWritePermissions`] = this.handleValidateWritePermissions.bind(this);
@@ -282,6 +284,28 @@ export class QueryHandlers {
   }
 
   /**
+   * Handle get pack index request
+   */
+  private async handleGetPackIndex(data: { packId: string }): Promise<any> {
+    try {
+      const gmCheck = this.validateGMAccess();
+      if (!gmCheck.allowed) {
+        return { error: 'Access denied', success: false };
+      }
+
+      this.dataAccess.validateFoundryState();
+
+      if (!data.packId) {
+        throw new Error('packId is required');
+      }
+
+      return await this.dataAccess.getPackIndex(data.packId);
+    } catch (error) {
+      throw new Error(`Failed to get pack index: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
    * Handle get active scene request
    */
   private async handleGetActiveScene(): Promise<any> {
@@ -390,6 +414,63 @@ export class QueryHandlers {
       return await this.dataAccess.createActorFromCompendiumEntry(requestData);
     } catch (error) {
       throw new Error(`Failed to create actor from compendium: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Handle actor creation from raw actor data payload
+   */
+  private async handleCreateActorFromData(data: {
+    actorData: Record<string, unknown>;
+    addToScene?: boolean;
+    updateExisting?: boolean;
+    existingActorIdentifier?: string;
+    preserveItemTypes?: string[];
+    placement?: {
+      type: 'random' | 'grid' | 'center' | 'coordinates';
+      coordinates?: { x: number; y: number }[];
+    };
+  }): Promise<any> {
+    try {
+      const gmCheck = this.validateGMAccess();
+      if (!gmCheck.allowed) {
+        return { error: 'Access denied', success: false };
+      }
+
+      this.dataAccess.validateFoundryState();
+
+      if (!data?.actorData || typeof data.actorData !== 'object') {
+        throw new Error('actorData object is required');
+      }
+
+      const requestData: {
+        actorData: Record<string, unknown>;
+        addToScene?: boolean;
+        updateExisting?: boolean;
+        existingActorIdentifier?: string;
+        preserveItemTypes?: string[];
+        placement?: {
+          type: 'random' | 'grid' | 'center' | 'coordinates';
+          coordinates?: { x: number; y: number }[];
+        };
+      } = {
+        actorData: data.actorData,
+        addToScene: data.addToScene ?? false,
+        updateExisting: data.updateExisting ?? false,
+      };
+      if (data.existingActorIdentifier) {
+        requestData.existingActorIdentifier = data.existingActorIdentifier;
+      }
+      if (data.preserveItemTypes?.length) {
+        requestData.preserveItemTypes = data.preserveItemTypes;
+      }
+      if (data.placement) {
+        requestData.placement = data.placement;
+      }
+
+      return await this.dataAccess.createActorFromData(requestData);
+    } catch (error) {
+      throw new Error(`Failed to create actor from data: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
