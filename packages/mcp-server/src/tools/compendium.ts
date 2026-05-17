@@ -279,20 +279,22 @@ export class CompendiumTools {
                   type: 'object',
                   properties: {
                     min: { type: 'number', description: 'Minimum tier (1-4)' },
-                    max: { type: 'number', description: 'Maximum tier (1-4)' }
+                    max: { type: 'number', description: 'Maximum tier (1-4)' },
                   },
-                  description: 'Tier range object (e.g., {"min": 2, "max": 3})'
-                }
+                  description: 'Tier range object (e.g., {"min": 2, "max": 3})',
+                },
               ],
-              description: 'Filter by adversary Tier (Cosmere RPG, 1-4). Cosmere\'s primary encounter-design dial.'
+              description:
+                "Filter by adversary Tier (Cosmere RPG, 1-4). Cosmere's primary encounter-design dial.",
             },
             role: {
               type: 'string',
-              description: 'Filter by adversary role (Cosmere RPG). Common values: "minion", "rival", "boss". Case-insensitive.'
+              description:
+                'Filter by adversary role (Cosmere RPG). Common values: "minion", "rival", "boss". Case-insensitive.',
             },
             hasInvestiture: {
               type: 'boolean',
-              description: 'Filter for Surge/Investiture-using adversaries (Cosmere RPG)'
+              description: 'Filter for Surge/Investiture-using adversaries (Cosmere RPG)',
             },
             hitPoints: {
               oneOf: [
@@ -301,26 +303,27 @@ export class CompendiumTools {
                   type: 'object',
                   properties: {
                     min: { type: 'number' },
-                    max: { type: 'number' }
+                    max: { type: 'number' },
                   },
-                  description: 'Health/HP range object (e.g., {"min": 30, "max": 80})'
-                }
+                  description: 'Health/HP range object (e.g., {"min": 30, "max": 80})',
+                },
               ],
-              description: 'Filter by max health/HP (Cosmere RPG; cross-system field)'
+              description: 'Filter by max health/HP (Cosmere RPG; cross-system field)',
             },
             defensesMin: {
               type: 'object',
               properties: {
                 phy: { type: 'number', description: 'Minimum Physical defense' },
                 cog: { type: 'number', description: 'Minimum Cognitive defense' },
-                spi: { type: 'number', description: 'Minimum Spiritual defense' }
+                spi: { type: 'number', description: 'Minimum Spiritual defense' },
               },
               additionalProperties: false,
-              description: 'Minimum defense thresholds (Cosmere RPG). Pass any subset of phy/cog/spi.'
+              description:
+                'Minimum defense thresholds (Cosmere RPG). Pass any subset of phy/cog/spi.',
             },
             deflectMin: {
               type: 'number',
-              description: 'Minimum Deflect rating (Cosmere RPG)'
+              description: 'Minimum Deflect rating (Cosmere RPG)',
             },
             limit: {
               type: 'number',
@@ -589,62 +592,100 @@ export class CompendiumTools {
       rarity: z.enum(['common', 'uncommon', 'rare', 'unique']).optional(),
 
       // Cosmere RPG specific
-      tier: z.union([
-        z.object({
-          min: z.number().optional(),
-          max: z.number().optional(),
-        }),
-        z.string().refine((val) => {
-          try {
-            const parsed = JSON.parse(val);
-            return typeof parsed === 'object' && parsed !== null &&
-                   (typeof parsed.min === 'number' || typeof parsed.max === 'number');
-          } catch {
-            return false;
-          }
-        }, { message: 'Tier range must be valid JSON object with min/max numbers' })
-          .transform((val) => JSON.parse(val) as { min?: number; max?: number }),
-        z.number(),
-        z.string().refine((val) => !isNaN(parseFloat(val)), {
-          message: 'Tier must be a valid number'
-        }).transform((val) => parseFloat(val)),
-      ]).optional(),
+      tier: z
+        .union([
+          z.object({
+            min: z.number().optional(),
+            max: z.number().optional(),
+          }),
+          z
+            .string()
+            .refine(
+              val => {
+                try {
+                  const parsed = JSON.parse(val);
+                  return (
+                    typeof parsed === 'object' &&
+                    parsed !== null &&
+                    (typeof parsed.min === 'number' || typeof parsed.max === 'number')
+                  );
+                } catch {
+                  return false;
+                }
+              },
+              { message: 'Tier range must be valid JSON object with min/max numbers' }
+            )
+            .transform(val => JSON.parse(val) as { min?: number; max?: number }),
+          z.number(),
+          z
+            .string()
+            .refine(val => !isNaN(parseFloat(val)), {
+              message: 'Tier must be a valid number',
+            })
+            .transform(val => parseFloat(val)),
+        ])
+        .optional(),
       role: z.string().optional(),
-      hasInvestiture: z.union([
-        z.boolean(),
-        z.string().refine((v) => ['true', 'false'].includes(v.toLowerCase())).transform((v) => v.toLowerCase() === 'true'),
-      ]).optional(),
-      hitPoints: z.union([
-        z.object({
-          min: z.number().optional(),
-          max: z.number().optional(),
-        }),
-        z.string().refine((val) => {
-          try {
-            const parsed = JSON.parse(val);
-            return typeof parsed === 'object' && parsed !== null &&
-                   (typeof parsed.min === 'number' || typeof parsed.max === 'number');
-          } catch {
-            return false;
-          }
-        }, { message: 'hitPoints range must be valid JSON object with min/max numbers' })
-          .transform((val) => JSON.parse(val) as { min?: number; max?: number }),
-        z.number(),
-        z.string().refine((val) => !isNaN(parseFloat(val)), {
-          message: 'hitPoints must be a valid number'
-        }).transform((val) => parseFloat(val)),
-      ]).optional(),
-      defensesMin: z.object({
-        phy: z.number().optional(),
-        cog: z.number().optional(),
-        spi: z.number().optional(),
-      }).optional(),
-      deflectMin: z.union([
-        z.number(),
-        z.string().refine((val) => !isNaN(parseFloat(val)), {
-          message: 'deflectMin must be a valid number'
-        }).transform((val) => parseFloat(val)),
-      ]).optional(),
+      hasInvestiture: z
+        .union([
+          z.boolean(),
+          z
+            .string()
+            .refine(v => ['true', 'false'].includes(v.toLowerCase()))
+            .transform(v => v.toLowerCase() === 'true'),
+        ])
+        .optional(),
+      hitPoints: z
+        .union([
+          z.object({
+            min: z.number().optional(),
+            max: z.number().optional(),
+          }),
+          z
+            .string()
+            .refine(
+              val => {
+                try {
+                  const parsed = JSON.parse(val);
+                  return (
+                    typeof parsed === 'object' &&
+                    parsed !== null &&
+                    (typeof parsed.min === 'number' || typeof parsed.max === 'number')
+                  );
+                } catch {
+                  return false;
+                }
+              },
+              { message: 'hitPoints range must be valid JSON object with min/max numbers' }
+            )
+            .transform(val => JSON.parse(val) as { min?: number; max?: number }),
+          z.number(),
+          z
+            .string()
+            .refine(val => !isNaN(parseFloat(val)), {
+              message: 'hitPoints must be a valid number',
+            })
+            .transform(val => parseFloat(val)),
+        ])
+        .optional(),
+      defensesMin: z
+        .object({
+          phy: z.number().optional(),
+          cog: z.number().optional(),
+          spi: z.number().optional(),
+        })
+        .optional(),
+      deflectMin: z
+        .union([
+          z.number(),
+          z
+            .string()
+            .refine(val => !isNaN(parseFloat(val)), {
+              message: 'deflectMin must be a valid number',
+            })
+            .transform(val => parseFloat(val)),
+        ])
+        .optional(),
 
       // Spellcasting flags (different names per system)
       hasSpells: z
@@ -824,7 +865,8 @@ export class CompendiumTools {
         }
         if (typeof system.size === 'string' && system.size) stats.size = system.size.toLowerCase();
 
-        const hpCurrent = typeof system.resources?.hea?.value === 'number' ? system.resources.hea.value : undefined;
+        const hpCurrent =
+          typeof system.resources?.hea?.value === 'number' ? system.resources.hea.value : undefined;
         const hpMax = readDerived(system.resources?.hea?.max);
         if (hpCurrent !== undefined || hpMax !== undefined) {
           stats.hitPoints = { current: hpCurrent, max: hpMax };

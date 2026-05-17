@@ -43,15 +43,15 @@ export class CosmereRpgIndexBuilder implements IndexBuilder {
     let totalErrors = 0;
 
     try {
-      const actorPacks = packs.filter((pack) => pack.metadata.type === 'Actor');
+      const actorPacks = packs.filter(pack => pack.metadata.type === 'Actor');
       const enhancedCreatures: CosmereRpgCreatureIndex[] = [];
 
       console.log(
-        `[${this.moduleId}] Starting Cosmere RPG creature index build from ${actorPacks.length} packs...`,
+        `[${this.moduleId}] Starting Cosmere RPG creature index build from ${actorPacks.length} packs...`
       );
       if (typeof ui !== 'undefined' && ui.notifications) {
         ui.notifications.info(
-          `Starting Cosmere RPG creature index build from ${actorPacks.length} packs...`,
+          `Starting Cosmere RPG creature index build from ${actorPacks.length} packs...`
         );
       }
 
@@ -65,7 +65,7 @@ export class CosmereRpgIndexBuilder implements IndexBuilder {
           }
           if (typeof ui !== 'undefined' && ui.notifications) {
             progressNotification = ui.notifications.info(
-              `Building creature index... ${progressPercent}% (${i + 1}/${actorPacks.length}) Processing: ${pack.metadata.label}`,
+              `Building creature index... ${progressPercent}% (${i + 1}/${actorPacks.length}) Processing: ${pack.metadata.label}`
             );
           }
         }
@@ -86,18 +86,15 @@ export class CosmereRpgIndexBuilder implements IndexBuilder {
             }
             if (typeof ui !== 'undefined' && ui.notifications) {
               progressNotification = ui.notifications.info(
-                `Index Progress: ${i + 1}/${actorPacks.length} packs complete, ${totalCreaturesSoFar} creatures indexed`,
+                `Index Progress: ${i + 1}/${actorPacks.length} packs complete, ${totalCreaturesSoFar} creatures indexed`
               );
             }
           }
         } catch (error) {
-          console.warn(
-            `[${this.moduleId}] Failed to process pack ${pack.metadata.label}:`,
-            error,
-          );
+          console.warn(`[${this.moduleId}] Failed to process pack ${pack.metadata.label}:`, error);
           if (typeof ui !== 'undefined' && ui.notifications) {
             ui.notifications.warn(
-              `Warning: Failed to index pack "${pack.metadata.label}" - continuing with other packs`,
+              `Warning: Failed to index pack "${pack.metadata.label}" - continuing with other packs`
             );
           }
         }
@@ -134,7 +131,7 @@ export class CosmereRpgIndexBuilder implements IndexBuilder {
   }
 
   async extractDataFromPack(
-    pack: any,
+    pack: any
   ): Promise<{ creatures: CosmereRpgCreatureIndex[]; errors: number }> {
     const creatures: CosmereRpgCreatureIndex[] = [];
     let errors = 0;
@@ -159,7 +156,7 @@ export class CosmereRpgIndexBuilder implements IndexBuilder {
         } catch (error) {
           console.warn(
             `[${this.moduleId}] Failed to extract Cosmere RPG data from ${doc.name} in ${pack.metadata.label}:`,
-            error,
+            error
           );
           errors++;
         }
@@ -167,7 +164,7 @@ export class CosmereRpgIndexBuilder implements IndexBuilder {
     } catch (error) {
       console.warn(
         `[${this.moduleId}] Failed to load documents from ${pack.metadata.label}:`,
-        error,
+        error
       );
       errors++;
     }
@@ -259,7 +256,7 @@ export class CosmereRpgIndexBuilder implements IndexBuilder {
     } catch (error) {
       console.warn(
         `[${this.moduleId}] Failed to extract Cosmere RPG data from ${doc.name}:`,
-        error,
+        error
       );
 
       // Minimal fallback so the index isn't gappy on a single bad doc.

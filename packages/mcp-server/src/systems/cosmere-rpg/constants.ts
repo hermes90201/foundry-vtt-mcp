@@ -17,11 +17,11 @@
 
 /** Attribute keys as Foundry stores them. */
 export const COSMERE_ATTR_KEYS = ['str', 'spd', 'int', 'wil', 'awa', 'pre'] as const;
-export type CosmereAttrKey = typeof COSMERE_ATTR_KEYS[number];
+export type CosmereAttrKey = (typeof COSMERE_ATTR_KEYS)[number];
 
 /** Defense keys (attribute groups). */
 export const COSMERE_DEFENSE_KEYS = ['phy', 'cog', 'spi'] as const;
-export type CosmereDefenseKey = typeof COSMERE_DEFENSE_KEYS[number];
+export type CosmereDefenseKey = (typeof COSMERE_DEFENSE_KEYS)[number];
 
 /** Resource keys mapped to friendly names used in the get-character response. */
 export const COSMERE_RESOURCES: Record<string, 'health' | 'focus' | 'investiture'> = {

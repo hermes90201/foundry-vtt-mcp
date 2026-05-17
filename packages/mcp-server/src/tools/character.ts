@@ -141,7 +141,8 @@ export class CharacterTools {
       },
       {
         name: 'add-actor-items',
-        description: 'Add one or more freshly-authored Item documents (talents, actions, powers, equipment, etc.) to an existing actor. Items are constructed from the supplied data — no compendium lookup is performed. Each item requires a non-empty "name" and a "type" valid for the active game system (e.g. Cosmere RPG: "action", "talent", "power", "weapon", "armor", "equipment", "loot", "ancestry", "culture", "path", "specialty", "trait", "injury", "connection", "goal", "talent_tree"). Pass system-specific data via the optional "system" object — Foundry\'s DataModel layer fills defaults and validates required sub-fields. GM-only. Returns the created item IDs so callers can update or roll them next.',
+        description:
+          'Add one or more freshly-authored Item documents (talents, actions, powers, equipment, etc.) to an existing actor. Items are constructed from the supplied data — no compendium lookup is performed. Each item requires a non-empty "name" and a "type" valid for the active game system (e.g. Cosmere RPG: "action", "talent", "power", "weapon", "armor", "equipment", "loot", "ancestry", "culture", "path", "specialty", "trait", "injury", "connection", "goal", "talent_tree"). Pass system-specific data via the optional "system" object — Foundry\'s DataModel layer fills defaults and validates required sub-fields. GM-only. Returns the created item IDs so callers can update or roll them next.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -162,15 +163,18 @@ export class CharacterTools {
                   },
                   type: {
                     type: 'string',
-                    description: 'Item type valid for the active system (e.g. "action", "talent", "weapon")',
+                    description:
+                      'Item type valid for the active system (e.g. "action", "talent", "weapon")',
                   },
                   img: {
                     type: 'string',
-                    description: 'Optional icon path (e.g. "icons/svg/explosion.svg" or a system-bundled path)',
+                    description:
+                      'Optional icon path (e.g. "icons/svg/explosion.svg" or a system-bundled path)',
                   },
                   system: {
                     type: 'object',
-                    description: 'System-specific data (free-form). For Cosmere actions: { activation: { type: "utility", cost: { value: 1, type: "act" }, consume: [{ type: "resource", resource: "foc", value: { min: 2, max: 2 } }] }, description: { value: "<p>HTML</p>" } }',
+                    description:
+                      'System-specific data (free-form). For Cosmere actions: { activation: { type: "utility", cost: { value: 1, type: "act" }, consume: [{ type: "resource", resource: "foc", value: { min: 2, max: 2 } }] }, description: { value: "<p>HTML</p>" } }',
                     additionalProperties: true,
                   },
                 },
@@ -475,10 +479,11 @@ export class CharacterTools {
       });
 
       return result;
-
     } catch (error) {
       this.logger.error('Failed to add actor items', error);
-      throw new Error(`Failed to add items to "${actorIdentifier}": ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to add items to "${actorIdentifier}": ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -739,7 +744,9 @@ export class CharacterTools {
         return adapter.extractCharacterStats(characterData);
       }
     } catch (error) {
-      this.logger.warn('Failed to use system adapter, falling back to legacy extraction', { error });
+      this.logger.warn('Failed to use system adapter, falling back to legacy extraction', {
+        error,
+      });
     }
 
     // Legacy extraction (backwards compatibility)

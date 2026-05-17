@@ -49,8 +49,8 @@ export class CosmereRpgAdapter implements SystemAdapter {
       supportedFeatures: {
         creatureIndex: true,
         characterStats: true,
-        spellcasting: false,  // Surges are modelled as items, not a spellcasting feature
-        powerLevel: true,     // Uses adversary tier (1-4) or character level
+        spellcasting: false, // Surges are modelled as items, not a spellcasting feature
+        powerLevel: true, // Uses adversary tier (1-4) or character level
       },
     };
   }
@@ -59,8 +59,13 @@ export class CosmereRpgAdapter implements SystemAdapter {
     return systemId.toLowerCase() === 'cosmere-rpg';
   }
 
-  extractCreatureData(_doc: any, _pack: any): { creature: SystemCreatureIndex; errors: number } | null {
-    throw new Error('extractCreatureData should be called from CosmereRpgIndexBuilder, not the adapter');
+  extractCreatureData(
+    _doc: any,
+    _pack: any
+  ): { creature: SystemCreatureIndex; errors: number } | null {
+    throw new Error(
+      'extractCreatureData should be called from CosmereRpgIndexBuilder, not the adapter'
+    );
   }
 
   getFilterSchema() {
@@ -70,7 +75,10 @@ export class CosmereRpgAdapter implements SystemAdapter {
   matchesFilters(creature: SystemCreatureIndex, filters: Record<string, any>): boolean {
     const validated = CosmereRpgFiltersSchema.safeParse(filters);
     if (!validated.success) return false;
-    return matchesCosmereRpgFilters(creature as CosmereRpgCreatureIndex, validated.data as CosmereRpgFilters);
+    return matchesCosmereRpgFilters(
+      creature as CosmereRpgCreatureIndex,
+      validated.data as CosmereRpgFilters
+    );
   }
 
   getDataPaths(): Record<string, string | null> {

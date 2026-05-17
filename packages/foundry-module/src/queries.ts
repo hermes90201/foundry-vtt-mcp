@@ -1467,7 +1467,6 @@ export class QueryHandlers {
     }
   }
 
-
   private async handleAddActorItems(data: {
     actorIdentifier: string;
     items: Array<{
@@ -1498,9 +1497,9 @@ export class QueryHandlers {
         items: data.items,
       });
     } catch (error) {
-      throw new Error(`Failed to add actor items: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to add actor items: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
-
-
 }

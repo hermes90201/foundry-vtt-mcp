@@ -123,17 +123,17 @@ interface PF2eCreatureIndex {
 interface CosmereRpgCreatureIndex {
   id: string;
   name: string;
-  type: string;                     // 'adversary' for compendium creatures
+  type: string; // 'adversary' for compendium creatures
   pack: string;
   packLabel: string;
-  tier: number;                     // 1-4
-  role: string;                     // minion | rival | boss | (system-extended)
-  creatureType: string;             // humanoid | animal | spren | …
-  subtype: string;                  // free-form secondary type
+  tier: number; // 1-4
+  role: string; // minion | rival | boss | (system-extended)
+  creatureType: string; // humanoid | animal | spren | …
+  subtype: string; // free-form secondary type
   size: string;
-  hitPoints: number;                // resources.hea.max (override-aware)
-  focus: number;                    // resources.foc.max
-  investiture: number;              // resources.inv.max — typically 0
+  hitPoints: number; // resources.hea.max (override-aware)
+  focus: number; // resources.foc.max
+  investiture: number; // resources.inv.max — typically 0
   hasInvestiture: boolean;
   defensePhysical: number;
   defenseCognitive: number;
@@ -1229,11 +1229,15 @@ class PersistentCreatureIndex {
     let totalErrors = 0;
 
     try {
-      const actorPacks = Array.from(game.packs.values()).filter(pack => pack.metadata.type === 'Actor');
+      const actorPacks = Array.from(game.packs.values()).filter(
+        pack => pack.metadata.type === 'Actor'
+      );
       const enhancedCreatures: CosmereRpgCreatureIndex[] = [];
       const packFingerprints = new Map<string, PackFingerprint>();
 
-      ui.notifications?.info(`Starting Cosmere RPG creature index build from ${actorPacks.length} packs...`);
+      ui.notifications?.info(
+        `Starting Cosmere RPG creature index build from ${actorPacks.length} packs...`
+      );
 
       for (let i = 0; i < actorPacks.length; i++) {
         const pack = actorPacks[i];
@@ -1270,14 +1274,18 @@ class PersistentCreatureIndex {
           }
         } catch (error) {
           console.warn(`[${this.moduleId}] Failed to process pack ${pack.metadata.label}:`, error);
-          ui.notifications?.warn(`Warning: Failed to index pack "${pack.metadata.label}" - continuing with other packs`);
+          ui.notifications?.warn(
+            `Warning: Failed to index pack "${pack.metadata.label}" - continuing with other packs`
+          );
         }
       }
 
       if (progressNotification) {
         progressNotification.remove();
       }
-      ui.notifications?.info(`Saving enhanced index to world database... (${enhancedCreatures.length} creatures)`);
+      ui.notifications?.info(
+        `Saving enhanced index to world database... (${enhancedCreatures.length} creatures)`
+      );
 
       const persistentIndex: PersistentEnhancedIndex = {
         metadata: {
@@ -1321,7 +1329,7 @@ class PersistentCreatureIndex {
    * Extract Cosmere RPG creatures from a single pack.
    */
   private async extractCosmereRpgDataFromPack(
-    pack: any,
+    pack: any
   ): Promise<{ creatures: CosmereRpgCreatureIndex[]; errors: number }> {
     const creatures: CosmereRpgCreatureIndex[] = [];
     let errors = 0;
@@ -1343,13 +1351,16 @@ class PersistentCreatureIndex {
         } catch (error) {
           console.warn(
             `[${this.moduleId}] Failed to extract Cosmere RPG data from ${doc.name} in ${pack.metadata.label}:`,
-            error,
+            error
           );
           errors++;
         }
       }
     } catch (error) {
-      console.warn(`[${this.moduleId}] Failed to load documents from ${pack.metadata.label}:`, error);
+      console.warn(
+        `[${this.moduleId}] Failed to load documents from ${pack.metadata.label}:`,
+        error
+      );
       errors++;
     }
 
@@ -1377,7 +1388,10 @@ class PersistentCreatureIndex {
   /**
    * Extract a single Cosmere RPG adversary into the creature index format.
    */
-  private extractCosmereRpgCreatureData(doc: any, pack: any): { creature: CosmereRpgCreatureIndex; errors: number } | null {
+  private extractCosmereRpgCreatureData(
+    doc: any,
+    pack: any
+  ): { creature: CosmereRpgCreatureIndex; errors: number } | null {
     try {
       const system = doc.system ?? {};
 
@@ -1439,7 +1453,10 @@ class PersistentCreatureIndex {
         errors: 0,
       };
     } catch (error) {
-      console.warn(`[${this.moduleId}] Failed to extract Cosmere RPG data from ${doc.name}:`, error);
+      console.warn(
+        `[${this.moduleId}] Failed to extract Cosmere RPG data from ${doc.name}:`,
+        error
+      );
       return {
         creature: {
           id: doc._id,
@@ -2992,17 +3009,20 @@ export class FoundryDataAccess {
    * Cosmere RPG criteria filter — tier, role, creatureType, size,
    * hasInvestiture, hitPoints range, defenses minimums, deflect minimum.
    */
-  private passesCosmereRpgCriteria(creature: CosmereRpgCreatureIndex, criteria: {
-    tier?: number | { min?: number; max?: number };
-    role?: string;
-    creatureType?: string;
-    size?: string;
-    hasInvestiture?: boolean;
-    hitPoints?: number | { min?: number; max?: number };
-    health?: number | { min?: number; max?: number };
-    defensesMin?: { phy?: number; cog?: number; spi?: number };
-    deflectMin?: number;
-  }): boolean {
+  private passesCosmereRpgCriteria(
+    creature: CosmereRpgCreatureIndex,
+    criteria: {
+      tier?: number | { min?: number; max?: number };
+      role?: string;
+      creatureType?: string;
+      size?: string;
+      hasInvestiture?: boolean;
+      hitPoints?: number | { min?: number; max?: number };
+      health?: number | { min?: number; max?: number };
+      defensesMin?: { phy?: number; cog?: number; spi?: number };
+      deflectMin?: number;
+    }
+  ): boolean {
     if (criteria.tier !== undefined) {
       if (typeof criteria.tier === 'number') {
         if (creature.tier !== criteria.tier) return false;
@@ -3017,7 +3037,10 @@ export class FoundryDataAccess {
       return false;
     }
 
-    if (criteria.creatureType && creature.creatureType.toLowerCase() !== criteria.creatureType.toLowerCase()) {
+    if (
+      criteria.creatureType &&
+      creature.creatureType.toLowerCase() !== criteria.creatureType.toLowerCase()
+    ) {
       return false;
     }
 
@@ -3025,7 +3048,10 @@ export class FoundryDataAccess {
       return false;
     }
 
-    if (criteria.hasInvestiture !== undefined && creature.hasInvestiture !== criteria.hasInvestiture) {
+    if (
+      criteria.hasInvestiture !== undefined &&
+      creature.hasInvestiture !== criteria.hasInvestiture
+    ) {
       return false;
     }
 

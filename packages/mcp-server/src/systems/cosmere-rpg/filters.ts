@@ -45,14 +45,7 @@ export const COSMERE_CREATURE_TYPES = [
 ] as const;
 export type CosmereCreatureType = (typeof COSMERE_CREATURE_TYPES)[number];
 
-export const COSMERE_SIZES = [
-  'tiny',
-  'small',
-  'medium',
-  'large',
-  'huge',
-  'gargantuan',
-] as const;
+export const COSMERE_SIZES = ['tiny', 'small', 'medium', 'large', 'huge', 'gargantuan'] as const;
 
 export const CosmereRpgFiltersSchema = z
   .object({
@@ -97,7 +90,7 @@ function inRange(value: number | undefined, range: RangeInput): boolean {
 
 export function matchesCosmereRpgFilters(
   creature: CosmereRpgCreatureIndex,
-  filters: CosmereRpgFilters,
+  filters: CosmereRpgFilters
 ): boolean {
   const data = creature.systemData ?? ({} as CosmereRpgCreatureIndex['systemData']);
 
@@ -140,7 +133,11 @@ export function describeCosmereRpgFilters(filters: CosmereRpgFilters): string {
   const parts: string[] = [];
 
   if (filters.tier !== undefined) {
-    parts.push(typeof filters.tier === 'number' ? `tier ${filters.tier}` : describeRange('tier', filters.tier));
+    parts.push(
+      typeof filters.tier === 'number'
+        ? `tier ${filters.tier}`
+        : describeRange('tier', filters.tier)
+    );
   }
   if (filters.role) parts.push(`role=${filters.role.toLowerCase()}`);
   if (filters.creatureType) parts.push(`type=${filters.creatureType.toLowerCase()}`);
@@ -149,7 +146,11 @@ export function describeCosmereRpgFilters(filters: CosmereRpgFilters): string {
     parts.push(filters.hasInvestiture ? 'has Investiture' : 'no Investiture');
   }
   if (filters.health !== undefined) {
-    parts.push(typeof filters.health === 'number' ? `hp=${filters.health}` : describeRange('hp', filters.health));
+    parts.push(
+      typeof filters.health === 'number'
+        ? `hp=${filters.health}`
+        : describeRange('hp', filters.health)
+    );
   }
   if (filters.defensesMin) {
     const { phy, cog, spi } = filters.defensesMin;
@@ -162,8 +163,12 @@ export function describeCosmereRpgFilters(filters: CosmereRpgFilters): string {
   return parts.length > 0 ? parts.join(', ') : 'no filters';
 }
 
-function describeRange(label: string, range: { min?: number | undefined; max?: number | undefined }): string {
-  if (range.min !== undefined && range.max !== undefined) return `${label} ${range.min}-${range.max}`;
+function describeRange(
+  label: string,
+  range: { min?: number | undefined; max?: number | undefined }
+): string {
+  if (range.min !== undefined && range.max !== undefined)
+    return `${label} ${range.min}-${range.max}`;
   if (range.min !== undefined) return `${label}>=${range.min}`;
   if (range.max !== undefined) return `${label}<=${range.max}`;
   return `${label} (any)`;
