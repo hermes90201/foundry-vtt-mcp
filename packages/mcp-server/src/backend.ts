@@ -34,6 +34,8 @@ import { MapGenerationTools } from './tools/map-generation.js';
 
 import { TokenManipulationTools } from './tools/token-manipulation.js';
 
+import { DevTools } from './tools/dev.js';
+
 import { DSA5CharacterCreator } from './systems/dsa5/character-creator.js';
 
 const CONTROL_HOST = '127.0.0.1';
@@ -1146,12 +1148,14 @@ async function startBackend(): Promise<void> {
   const { PF2eAdapter } = await import('./systems/pf2e/adapter.js');
   const { DSA5Adapter } = await import('./systems/dsa5/adapter.js');
   const { CosmereRpgAdapter } = await import('./systems/cosmere-rpg/adapter.js');
+  const { BlackFlagAdapter } = await import('./systems/black-flag/adapter.js');
 
   const systemRegistry = getSystemRegistry(logger);
   systemRegistry.register(new DnD5eAdapter());
   systemRegistry.register(new PF2eAdapter());
   systemRegistry.register(new DSA5Adapter());
   systemRegistry.register(new CosmereRpgAdapter());
+  systemRegistry.register(new BlackFlagAdapter());
 
   logger.info('System registry initialized', {
     supportedSystems: systemRegistry.getSupportedSystems(),
@@ -1176,6 +1180,8 @@ async function startBackend(): Promise<void> {
   const ownershipTools = new OwnershipTools({ foundryClient, logger });
 
   const tokenManipulationTools = new TokenManipulationTools({ foundryClient, logger });
+
+  const devTools = new DevTools({ foundryClient, logger });
 
   // Initialize mapgen-style backend components for map generation
   let mapGenerationJobQueue: any = null;
@@ -1395,6 +1401,8 @@ async function startBackend(): Promise<void> {
     ...tokenManipulationTools.getToolDefinitions(),
 
     ...mapGenerationTools.getToolDefinitions(),
+
+    ...devTools.getToolDefinitions(),
   ];
 
   // Start Foundry connector (owns app port 31415)
@@ -1664,6 +1672,11 @@ async function startBackend(): Promise<void> {
 
                 case 'switch-scene':
                   result = await mapGenerationTools.switchScene(args);
+
+                  break;
+
+                case 'execute-script':
+                  result = await devTools.handleExecuteScript(args);
 
                   break;
 

@@ -106,4 +106,8 @@ export class FoundryClient {
   isConnected(): boolean {
     return this.connector.isConnected();
   }
+
+  async executeScript(script: string): Promise<any> {
+    return this.query('foundry-mcp-bridge.executeScript', { script });
+  }
 }

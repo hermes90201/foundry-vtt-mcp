@@ -603,9 +603,12 @@ class PersistentCreatureIndex {
       return await this.buildDnD5eIndex(force);
     } else if (gameSystem === 'cosmere-rpg') {
       return await this.buildCosmereRpgIndex(force);
+    } else if (gameSystem === 'black-flag') {
+      // Black Flag uses D&D5e-compatible data structures
+      return await this.buildDnD5eIndex(force);
     } else {
       throw new Error(
-        `Enhanced creature index not supported for system: ${gameSystem}. Only D&D 5e, Pathfinder 2e, and Cosmere RPG are currently supported.`
+        `Enhanced creature index not supported for system: ${gameSystem}. Only D&D 5e, Pathfinder 2e, Cosmere RPG, and Black Flag are currently supported.`
       );
     }
   }

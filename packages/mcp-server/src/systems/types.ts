@@ -11,7 +11,7 @@ import { z } from 'zod';
  * Supported game system identifiers
  * Extend this type when adding new systems
  */
-export type SystemId = 'dnd5e' | 'pf2e' | 'dsa5' | 'cosmere-rpg' | 'other';
+export type SystemId = 'dnd5e' | 'pf2e' | 'dsa5' | 'cosmere-rpg' | 'black-flag' | 'other';
 
 /**
  * System metadata returned by adapters
@@ -281,6 +281,28 @@ export interface CosmereRpgCreatureIndex extends SystemCreatureIndex {
 }
 
 /**
+ * Black Flag (Tales of the Valiant) specific creature index structure
+ *
+ * Black Flag is D&D5e-derived — uses the same core data model with
+ * additions for rarity tracking and system-specific data paths.
+ */
+export interface BlackFlagCreatureIndex extends SystemCreatureIndex {
+  system: 'black-flag';
+  systemData: {
+    challengeRating?: number;
+    creatureType?: string;
+    size?: string;
+    alignment?: string;
+    level?: number;
+    hasSpellcasting: boolean;
+    hasLegendaryActions: boolean;
+    hitPoints?: number;
+    armorClass?: number;
+    rarity?: string; // localized rarity key (null/empty = mundane)
+  };
+}
+
+/**
  * Generic creature index for unsupported systems
  */
 export interface GenericCreatureIndex extends SystemCreatureIndex {
@@ -296,4 +318,5 @@ export type AnyCreatureIndex =
   | PF2eCreatureIndex
   | DSA5CreatureIndex
   | CosmereRpgCreatureIndex
+  | BlackFlagCreatureIndex
   | GenericCreatureIndex;

@@ -114,6 +114,9 @@ export class QueryHandlers {
     // Item authoring on actor sheets
     CONFIG.queries[`${modulePrefix}.addActorItems`] = this.handleAddActorItems.bind(this);
 
+    // Dev: Execute arbitrary JavaScript in Foundry context
+    CONFIG.queries[`${modulePrefix}.executeScript`] = this.handleExecuteScript.bind(this);
+
     // Phase 7: Token manipulation queries
     CONFIG.queries[`${modulePrefix}.move-token`] = this.handleMoveToken.bind(this);
     CONFIG.queries[`${modulePrefix}.update-token`] = this.handleUpdateToken.bind(this);
@@ -1500,6 +1503,68 @@ export class QueryHandlers {
       throw new Error(
         `Failed to add actor items: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
+    }
+  }
+
+  /**
+   * Execute arbitrary JavaScript in the Foundry client context.
+   * GM-only. Returns the script result as serialized JSON.
+   * Use for inspection, item creation, and debugging.
+   */
+  private async handleExecuteScript(data: { script: string }): Promise<any> {
+    try {
+      const gmCheck = this.validateGMAccess();
+      if (!gmCheck.allowed) {
+        return { error: 'Access denied — GM only', success: false };
+      }
+
+      if (!data?.script) {
+        throw new Error('script is required');
+      }
+
+      // Execute in Foundry context. Use Function constructor for expressions,
+      // and wrap in an async IIFE so await works.
+      const result = await (async () => {
+        try {
+          const fn = new Function(
+            'game',
+            'Item',
+            'Actor',
+            'ui',
+            'CONFIG',
+            'foundry',
+            `
+            return (async () => {
+              try {
+                const __result = ${data.script};
+                // If it's a Promise, await it
+                const __value = __result instanceof Promise ? await __result : __result;
+                return typeof __value === 'object' ? JSON.parse(JSON.stringify(__value)) : __value;
+              } catch (e) {
+                return { error: e.message, stack: e.stack?.split('\\n').slice(0,3).join('\\n') };
+              }
+            })();
+          `
+          );
+          return await fn(
+            game,
+            (globalThis as any).Item,
+            (globalThis as any).Actor,
+            ui,
+            CONFIG,
+            foundry
+          );
+        } catch (err: any) {
+          return { error: err.message, stack: err.stack };
+        }
+      })();
+
+      return { success: true, result };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
     }
   }
 }
