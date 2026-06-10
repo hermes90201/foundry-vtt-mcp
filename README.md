@@ -1,6 +1,6 @@
 # Foundry VTT MCP Bridge
 
-Connect Foundry VTT to Claude Desktop for AI-powered campaign management through the Model Context Protocol (MCP). It currently supports Dungeons and Dragons Fifth Edition, Pathfinder Second Edition, Das Schwarze Augen Fifth Edition, & Cosmere RPG System. The majority of MCP tools are system agnostic or have features that are aware of the system it is working with, excluding some DSA 5 specific tools. 
+Connect Foundry VTT to Claude Desktop for AI-powered campaign management through the Model Context Protocol (MCP). It currently supports Dungeons and Dragons Fifth Edition, Pathfinder Second Edition, Das Schwarze Augen Fifth Edition, & Cosmere RPG System. The majority of MCP tools are system agnostic or have features that are aware of the system it is working with, excluding some DSA 5 specific tools.
 
 ## Overview
 
@@ -54,7 +54,7 @@ This project was built with the assistance of Claude Code. If you like this proj
 
 1. Open Foundry VTT (v13 or v14)
 2. Select install module in the Foundry Add-ons menu
-3. At the bottom of the window, add the Manifest URL as: https://github.com/adambdooley/foundry-vtt-mcp/blob/master/packages/foundry-module/module.json and click install
+3. At the bottom of the window, add the Manifest URL as: https://github.com/jonmichaels/foundry-vtt-mcp/releases/latest/download/module.json and click install
 4. Enable "Foundry MCP Bridge" in Module Management
    - **Do not change the module ID or folder name.** The MCP backend and the Claude integration both expect the module to live in a directory called `foundry-mcp-bridge`. Renaming the ID in `module.json` breaks socket routing and stops Claude from seeing the backend.
 
